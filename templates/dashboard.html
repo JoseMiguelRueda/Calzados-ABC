@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="p-4 bg-white rounded shadow-sm mb-4">
+    <h4>Bienvenido, {{ session.get('nombre') }}</h4>
+    <p class="text-muted mb-0">Rol activo: <strong>{{ session.get('rol') }}</strong> | Incremento Sprint 1 (HU-01, HU-02, HU-03)</p>
+</div>
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card border-primary">
+            <div class="card-body">
+                <h5 class="card-title">Clientes Mayoristas</h5>
+                <p class="display-6">{{ total_clientes }}</p>
+                {% if session.get('rol') == 'Administrador' %}
+                <a href="{{ url_for('clientes') }}" class="btn btn-sm btn-primary">Gestionar Avales (HU-02)</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-success">
+            <div class="card-body">
+                <h5 class="card-title">Calzados Catalogados</h5>
+                <p class="display-6">{{ total_calzados }}</p>
+                <a href="{{ url_for('catalogo') }}" class="btn btn-sm btn-success">Ver Catálogo (HU-03)</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,293 @@
+{% extends 'base.html' %}
+{% block content %}
+<h4 class="mb-3">Catálogo Central de Calzados (HU-03 · RN-01)</h4>
+
+{% if session.get('rol') == 'Administrador' %}
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+        <span>Registrar Nuevo Calzado</span>
+        <div class="d-flex gap-1">
+            <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#modalAgregarMarca">+ Marca</button>
+            <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#modalAgregarModelo">+ Modelo</button>
+            <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#modalAgregarColor">+ Color</button>
+            <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#modalAgregarTipo">+ Tipo</button>
+            <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#modalAgregarTalla">+ Talla</button>
+        </div>
+    </div>
+    <div class="card-body">
+        <form method="POST" class="row g-3">
+            <input type="hidden" name="accion" value="crear">
+            <div class="col-md-2">
+                <label class="form-label">Código</label>
+                <input type="text" name="codigo" class="form-control" placeholder="PAM-016-28" required>
+            </div>
+
+            <!-- TIPO + BOTÓN BASURERO -->
+            <div class="col-md-2">
+                <label class="form-label">Tipo</label>
+                <div class="input-group">
+                    <select name="tipo_calzado_id" id="select_tipo" class="form-select" required>
+                        {% for t in tipos %}
+                        <option value="{{ t.id }}">{{ t.descripcion }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="button" class="btn btn-outline-danger btn-borrar-seleccionado" data-target="select_tipo" data-accion="eliminar_tipo" title="Borrar tipo seleccionado">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- MARCA + BOTÓN BASURERO -->
+            <div class="col-md-2">
+                <label class="form-label">Marca</label>
+                <div class="input-group">
+                    <select name="marca_id" id="select_marca" class="form-select" required>
+                        <option value="" disabled selected>Elija marca...</option>
+                        {% for m in marcas %}
+                        <option value="{{ m.id }}">{{ m.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="button" class="btn btn-outline-danger btn-borrar-seleccionado" data-target="select_marca" data-accion="eliminar_marca" title="Borrar marca seleccionada">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- MODELO (FILTRADO POR MARCA) + BOTÓN BASURERO -->
+            <div class="col-md-2">
+                <label class="form-label">Modelo</label>
+                <div class="input-group">
+                    <select name="modelo_id" id="select_modelo" class="form-select" required disabled>
+                        <option value="" disabled selected>Elija marca primero</option>
+                        {% for mod in modelos %}
+                        <option value="{{ mod.id }}" data-marca-id="{{ mod.marca_id }}">{{ mod.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="button" class="btn btn-outline-danger btn-borrar-seleccionado" data-target="select_modelo" data-accion="eliminar_modelo" title="Borrar modelo seleccionado">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- COLOR + BOTÓN BASURERO -->
+            <div class="col-md-2">
+                <label class="form-label">Color</label>
+                <div class="input-group">
+                    <select name="color_id" id="select_color" class="form-select" required>
+                        {% for col in colores %}
+                        <option value="{{ col.id }}">{{ col.color }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="button" class="btn btn-outline-danger btn-borrar-seleccionado" data-target="select_color" data-accion="eliminar_color" title="Borrar color seleccionado">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- TALLA + BOTÓN BASURERO -->
+            <div class="col-md-2">
+                <label class="form-label">Talla (EU / BR)</label>
+                <div class="input-group">
+                    <select name="talla_id" id="select_talla" class="form-select" required>
+                        {% for tal in tallas %}
+                        <option value="{{ tal.id }}">EU {{ tal.eu }} / BR {{ tal.br }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="button" class="btn btn-outline-danger btn-borrar-seleccionado" data-target="select_talla" data-accion="eliminar_talla" title="Borrar talla seleccionada">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <button type="submit" class="btn btn-success">Guardar en Catálogo</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Formulario oculto para eliminar el ítem específico elegido en cualquier selector -->
+<form id="formEliminarAtributo" method="POST" style="display:none;">
+    <input type="hidden" name="accion" id="hidden_accion_attr">
+    <input type="hidden" name="id" id="hidden_id_attr">
+</form>
+
+<!-- Modales rápidos para agregar opción a cada tabla -->
+<div class="modal fade" id="modalAgregarMarca" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <form method="POST" class="modal-content">
+            <input type="hidden" name="accion" value="agregar_marca">
+            <div class="modal-header"><h6 class="modal-title">Agregar Marca</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body"><input type="text" name="nombre" class="form-control" placeholder="Ej. Pampili" required></div>
+            <div class="modal-footer"><button class="btn btn-primary btn-sm">Guardar</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="modalAgregarModelo" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <form method="POST" class="modal-content">
+            <input type="hidden" name="accion" value="agregar_modelo">
+            <div class="modal-header"><h6 class="modal-title">Agregar Modelo</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <label class="form-label small">Marca del modelo</label>
+                <select name="marca_id" class="form-select mb-2" required>
+                    <option value="" disabled selected>Seleccione marca...</option>
+                    {% for m in marcas %}<option value="{{ m.id }}">{{ m.nombre }}</option>{% endfor %}
+                </select>
+                <label class="form-label small">Nombre / Código Modelo</label>
+                <input type="text" name="nombre" class="form-control" placeholder="Ej. 016" required>
+            </div>
+            <div class="modal-footer"><button class="btn btn-primary btn-sm">Guardar</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="modalAgregarColor" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <form method="POST" class="modal-content">
+            <input type="hidden" name="accion" value="agregar_color">
+            <div class="modal-header"><h6 class="modal-title">Agregar Color</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body"><input type="text" name="color" class="form-control" placeholder="Ej. Negro" required></div>
+            <div class="modal-footer"><button class="btn btn-primary btn-sm">Guardar</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="modalAgregarTipo" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <form method="POST" class="modal-content">
+            <input type="hidden" name="accion" value="agregar_tipo">
+            <div class="modal-header"><h6 class="modal-title">Agregar Tipo</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body"><input type="text" name="descripcion" class="form-control" placeholder="Ej. Sandalias" required></div>
+            <div class="modal-footer"><button class="btn-primary btn btn-sm">Guardar</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="modalAgregarTalla" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <form method="POST" class="modal-content">
+            <input type="hidden" name="accion" value="agregar_talla">
+            <div class="modal-header"><h6 class="modal-title">Agregar Talla</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <input type="text" name="eu" class="form-control mb-2" placeholder="EU (Obligatorio, ej. 27)" required>
+                <input type="text" name="br" class="form-control mb-2" placeholder="BR (ej. 25)">
+                <input type="text" name="usa" class="form-control mb-2" placeholder="USA (ej. 10)">
+                <input type="text" name="jp" class="form-control mb-2" placeholder="JP (ej. 16.5)">
+                <input type="text" name="cm" class="form-control" placeholder="CM (ej. 16.5)">
+            </div>
+            <div class="modal-footer"><button class="btn btn-primary btn-sm">Guardar</button></div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<div class="card shadow-sm">
+    <div class="card-header">Listado de Calzados (Combinación única: Marca + Modelo + Color + Talla)</div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Tipo</th>
+                    <th>Marca</th>
+                    <th>Modelo</th>
+                    <th>Color</th>
+                    <th>Talla (EU / BR)</th>
+                    <th>Estado</th>
+                    {% if session.get('rol') == 'Administrador' %}<th class="text-end">Acciones</th>{% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for cal in calzados %}
+                <tr>
+                    <td>{{ cal.codigo }}</td>
+                    <td>{{ cal.tipo.descripcion }}</td>
+                    <td>{{ cal.marca.nombre }}</td>
+                    <td>{{ cal.modelo.nombre }}</td>
+                    <td>{{ cal.color_obj.color }}</td>
+                    <td>EU {{ cal.talla.eu }} (BR {{ cal.talla.br }})</td>
+                    <td>
+                        <span class="badge bg-{{ 'success' if cal.activo else 'secondary' }}">
+                            {{ 'Activo' if cal.activo else 'Inactivo' }}
+                        </span>
+                    </td>
+                    {% if session.get('rol') == 'Administrador' %}
+                    <td class="text-end">
+                        {% if cal.activo %}
+                        <form method="POST" class="d-inline">
+                            <input type="hidden" name="accion" value="baja">
+                            <input type="hidden" name="calzado_id" value="{{ cal.id }}">
+                            <button class="btn btn-sm btn-outline-warning">Baja Lógica</button>
+                        </form>
+                        {% endif %}
+                        <form method="POST" class="d-inline">
+                            <input type="hidden" name="accion" value="eliminar">
+                            <input type="hidden" name="calzado_id" value="{{ cal.id }}">
+                            <button class="btn btn-sm btn-outline-danger" title="Eliminar calzado"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const selectMarca = document.getElementById("select_marca");
+    const selectModelo = document.getElementById("select_modelo");
+    const todasOpciones = selectModelo ? Array.from(selectModelo.querySelectorAll("option[data-marca-id]")) : [];
+
+    if (selectMarca && selectModelo) {
+        selectMarca.addEventListener("change", function() {
+            const marcaId = this.value;
+            selectModelo.innerHTML = "";
+            const compatibles = todasOpciones.filter(opt => opt.getAttribute("data-marca-id") === marcaId);
+
+            if (compatibles.length === 0) {
+                const optVacio = document.createElement("option");
+                optVacio.value = "";
+                optVacio.textContent = "Sin modelos para esta marca";
+                optVacio.disabled = true;
+                optVacio.selected = true;
+                selectModelo.appendChild(optVacio);
+                selectModelo.disabled = true;
+            } else {
+                const optDefault = document.createElement("option");
+                optDefault.value = "";
+                optDefault.textContent = "Elija modelo...";
+                optDefault.disabled = true;
+                optDefault.selected = true;
+                selectModelo.appendChild(optDefault);
+
+                compatibles.forEach(opt => selectModelo.appendChild(opt.cloneNode(true)));
+                selectModelo.disabled = false;
+            }
+        });
+    }
+
+    // Botón basurero en cada campo para borrar el ítem seleccionado
+    document.querySelectorAll(".btn-borrar-seleccionado").forEach(btn => {
+        btn.addEventListener("click", function() {
+            const targetId = this.getAttribute("data-target");
+            const accion = this.getAttribute("data-accion");
+            const selectEl = document.getElementById(targetId);
+            if (!selectEl || !selectEl.value) {
+                alert("Selecciona primero el elemento que deseas borrar.");
+                return;
+            }
+            const texto = selectEl.options[selectEl.selectedIndex].text;
+            if (confirm(`¿Borrar "${texto}"?`)) {
+                document.getElementById("hidden_accion_attr").value = accion;
+                document.getElementById("hidden_id_attr").value = selectEl.value;
+                document.getElementById("formEliminarAtributo").submit();
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
