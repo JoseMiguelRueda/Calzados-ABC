@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% block content %}
+<h4 class="mb-3">Importación a Almacén Central y Traspasos Inter-Almacén (HU-07 · HU-08 · RN-04)</h4>
+
+<div class="row g-4 mb-4">
+    <!-- HU-07: Importación de fábrica a Almacén Central -->
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-dark text-white fw-bold">HU-07: Registrar Importación a Almacén Central</div>
+            <div class="card-body">
+                <form method="POST" class="row g-2">
+                    <input type="hidden" name="accion" value="importar">
+                    <div class="col-md-6">
+                        <label class="form-label small">Código Lote</label>
+                        <input type="text" name="codigo_lote" class="form-control form-control-sm" placeholder="IMP-2026-001" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small">Fábrica Origen</label>
+                        <input type="text" name="fabrica" class="form-control form-control-sm" placeholder="Fábrica Brasil" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small">Calzado</label>
+                        <select name="calzado_id" class="form-select form-select-sm" required>
+                            {% for cal in calzados %}
+                            <option value="{{ cal.id }}">{{ cal.codigo }} - {{ cal.marca.nombre }} {{ cal.modelo.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">Cantidad</label>
+                        <input type="number" name="cantidad" min="1" value="50" class="form-control form-control-sm" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">Fecha Arribo</label>
+                        <input type="date" name="fecha_arribo" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-12 mt-2">
+                        <button class="btn btn-sm btn-dark">Ingresar a Almacén Central</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- HU-08: Traspaso inter-almacén (RN-04) -->
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-primary text-white fw-bold">HU-08: Traspaso Inter-Almacén (RN-04)</div>
+            <div class="card-body">
+                <form method="POST" class="row g-2">
+                    <input type="hidden" name="accion" value="traspaso">
+                    <div class="col-md-6">
+                        <label class="form-label small">Almacén Origen</label>
+                        <select name="almacen_origen_id" class="form-select form-select-sm" required>
+                            {% for alm in almacenes %}
+                            <option value="{{ alm.id }}">{{ alm.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small">Almacén Destino</label>
+                        <select name="almacen_destino_id" class="form-select form-select-sm" required>
+                            {% for alm in almacenes %}
+                            <option value="{{ alm.id }}">{{ alm.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label small">Calzado</label>
+                        <select name="calzado_id" class="form-select form-select-sm" required>
+                            {% for cal in calzados %}
+                            <option value="{{ cal.id }}">{{ cal.codigo }} - {{ cal.marca.nombre }} {{ cal.modelo.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small">Cantidad</label>
+                        <input type="number" name="cantidad" min="1" value="5" class="form-control form-control-sm" required>
+                    </div>
+                    <div class="col-12 mt-2">
+                        <button class="btn btn-sm btn-primary">Ejecutar Traspaso</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header fw-bold d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <span>Stock por Almacén</span>
+        <div class="input-group input-group-sm" style="max-width: 320px;">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" id="buscarModeloStock" class="form-control" placeholder="Buscar por modelo...">
+            <button type="button" id="limpiarBuscarModelo" class="btn btn-outline-secondary" title="Limpiar búsqueda">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm table-striped mb-0" id="tablaStockAlmacen">
+            <thead><tr><th>Almacén</th><th>Código Calzado</th><th>Modelo</th><th>Producto</th><th>Cantidad</th></tr></thead>
+            <tbody>
+                {% for st in stocks %}
+                <tr class="fila-stock-almacen" data-modelo="{{ st.calzado.modelo.nombre|lower }}">
+                    <td>{{ st.almacen.nombre }}</td>
+                    <td>{{ st.calzado.codigo }}</td>
+                    <td><span class="badge bg-secondary">{{ st.calzado.modelo.nombre }}</span></td>
+                    <td>{{ st.calzado.marca.nombre }} {{ st.calzado.modelo.nombre }} ({{ st.calzado.color_obj.color }}, EU {{ st.calzado.talla.eu }})</td>
+                    <td><strong>{{ st.cantidad }}</strong></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const inputBuscar = document.getElementById("buscarModeloStock");
+    const btnLimpiar = document.getElementById("limpiarBuscarModelo");
+    const filas = document.querySelectorAll("#tablaStockAlmacen tbody tr.fila-stock-almacen");
+
+    function filtrarPorModelo() {
+        const termino = (inputBuscar.value || "").trim().toLowerCase();
+        filas.forEach(fila => {
+            const modelo = (fila.getAttribute("data-modelo") || "").toLowerCase();
+            fila.style.display = (!termino || modelo.includes(termino)) ? "" : "none";
+        });
+    }
+
+    if (inputBuscar) {
+        inputBuscar.addEventListener("input", filtrarPorModelo);
+    }
+    if (btnLimpiar && inputBuscar) {
+        btnLimpiar.addEventListener("click", function() {
+            inputBuscar.value = "";
+            filtrarPorModelo();
+            inputBuscar.focus();
+        });
+    }
+});
+</script>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header fw-bold">Historial de Importaciones</div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>Lote</th><th>Fábrica</th><th>Calzado</th><th>Cant.</th></tr></thead>
+                    <tbody>
+                        {% for imp in importaciones %}
+                        <tr><td>{{ imp.codigo_lote }}</td><td>{{ imp.fabrica }}</td><td>{{ imp.calzado.codigo }}</td><td>+{{ imp.cantidad }}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header fw-bold">Historial de Traspasos</div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>Código</th><th>Origen → Destino</th><th>Calzado</th><th>Cant.</th></tr></thead>
+                    <tbody>
+                        {% for trp in traspasos %}
+                        <tr>
+                            <td>{{ trp.codigo_traspaso }}</td>
+                            <td>{{ trp.almacen_origen.nombre }} → {{ trp.almacen_destino.nombre }}</td>
+                            <td>{{ trp.calzado.codigo }}</td>
+                            <td>{{ trp.cantidad }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

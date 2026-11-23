@@ -19,10 +19,9 @@
             <input type="hidden" name="accion" value="crear">
             <div class="col-md-2">
                 <label class="form-label">Código</label>
-                <input type="text" name="codigo" class="form-control" placeholder="PAM-016-28" required>
+                <input type="text" name="codigo" id="input_codigo_auto" class="form-control bg-light fw-bold" placeholder="Auto (MAR-MOD-COL-EU)" readonly>
             </div>
 
-            <!-- TIPO + BOTÓN BASURERO -->
             <div class="col-md-2">
                 <label class="form-label">Tipo</label>
                 <div class="input-group">
@@ -37,7 +36,6 @@
                 </div>
             </div>
 
-            <!-- MARCA + BOTÓN BASURERO -->
             <div class="col-md-2">
                 <label class="form-label">Marca</label>
                 <div class="input-group">
@@ -53,7 +51,6 @@
                 </div>
             </div>
 
-            <!-- MODELO (FILTRADO POR MARCA) + BOTÓN BASURERO -->
             <div class="col-md-2">
                 <label class="form-label">Modelo</label>
                 <div class="input-group">
@@ -69,7 +66,6 @@
                 </div>
             </div>
 
-            <!-- COLOR + BOTÓN BASURERO -->
             <div class="col-md-2">
                 <label class="form-label">Color</label>
                 <div class="input-group">
@@ -84,7 +80,6 @@
                 </div>
             </div>
 
-            <!-- TALLA + BOTÓN BASURERO -->
             <div class="col-md-2">
                 <label class="form-label">Talla (EU / BR)</label>
                 <div class="input-group">
@@ -99,6 +94,15 @@
                 </div>
             </div>
 
+            <div class="col-md-3">
+                <label class="form-label">Precio Mayorista (Bs.)</label>
+                <input type="number" step="0.01" name="precio_mayorista" class="form-control" value="120.00" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Stock Inicial</label>
+                <input type="number" name="stock_disponible" class="form-control" value="20" required>
+            </div>
+
             <div class="col-12">
                 <button type="submit" class="btn btn-success">Guardar en Catálogo</button>
             </div>
@@ -106,13 +110,11 @@
     </div>
 </div>
 
-<!-- Formulario oculto para eliminar el ítem específico elegido en cualquier selector -->
 <form id="formEliminarAtributo" method="POST" style="display:none;">
     <input type="hidden" name="accion" id="hidden_accion_attr">
     <input type="hidden" name="id" id="hidden_id_attr">
 </form>
 
-<!-- Modales rápidos para agregar opción a cada tabla -->
 <div class="modal fade" id="modalAgregarMarca" tabindex="-1">
     <div class="modal-dialog modal-sm">
         <form method="POST" class="modal-content">
@@ -160,7 +162,7 @@
             <input type="hidden" name="accion" value="agregar_tipo">
             <div class="modal-header"><h6 class="modal-title">Agregar Tipo</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
             <div class="modal-body"><input type="text" name="descripcion" class="form-control" placeholder="Ej. Sandalias" required></div>
-            <div class="modal-footer"><button class="btn-primary btn btn-sm">Guardar</button></div>
+            <div class="modal-footer"><button class="btn btn-primary btn-sm">Guardar</button></div>
         </form>
     </div>
 </div>
@@ -195,6 +197,8 @@
                     <th>Modelo</th>
                     <th>Color</th>
                     <th>Talla (EU / BR)</th>
+                    <th>Precio Mayorista</th>
+                    <th>Stock</th>
                     <th>Estado</th>
                     {% if session.get('rol') == 'Administrador' %}<th class="text-end">Acciones</th>{% endif %}
                 </tr>
@@ -208,6 +212,8 @@
                     <td>{{ cal.modelo.nombre }}</td>
                     <td>{{ cal.color_obj.color }}</td>
                     <td>EU {{ cal.talla.eu }} (BR {{ cal.talla.br }})</td>
+                    <td>Bs. {{ "%.2f"|format(cal.precio_mayorista) }}</td>
+                    <td>{{ cal.stock_disponible }}</td>
                     <td>
                         <span class="badge bg-{{ 'success' if cal.activo else 'secondary' }}">
                             {{ 'Activo' if cal.activo else 'Inactivo' }}
@@ -270,7 +276,6 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    // Botón basurero en cada campo para borrar el ítem seleccionado
     document.querySelectorAll(".btn-borrar-seleccionado").forEach(btn => {
         btn.addEventListener("click", function() {
             const targetId = this.getAttribute("data-target");

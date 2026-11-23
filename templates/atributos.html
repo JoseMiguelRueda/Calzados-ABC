@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Administración de Tablas Descriptivas del Calzado</h4>
+    <a href="{{ url_for('catalogo') }}" class="btn btn-outline-primary btn-sm">Ir al Catálogo de Calzados →</a>
+</div>
+
+<div class="row g-4">
+    <!-- 1. MARCAS -->
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-dark text-white fw-bold">1. Marcas</div>
+            <div class="card-body">
+                <form method="POST" class="d-flex gap-2 mb-3">
+                    <input type="hidden" name="accion" value="agregar_marca">
+                    <input type="text" name="nombre" class="form-control form-control-sm" placeholder="Ej. Pampili, Molekinha..." required>
+                    <button class="btn btn-sm btn-primary">Agregar</button>
+                </form>
+                <table class="table table-sm table-striped mb-0">
+                    <thead><tr><th>ID</th><th>Nombre</th><th class="text-end">Acción</th></tr></thead>
+                    <tbody>
+                        {% for m in marcas %}
+                        <tr>
+                            <td>{{ m.id }}</td>
+                            <td>{{ m.nombre }}</td>
+                            <td class="text-end">
+                                <form method="POST" class="d-inline">
+                                    <input type="hidden" name="accion" value="eliminar_marca">
+                                    <input type="hidden" name="id" value="{{ m.id }}">
+                                    <button class="btn btn-sm btn-outline-danger py-0">Eliminar</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. MODELOS (Obligatoriamente asociados a su Marca) -->
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-dark text-white fw-bold">2. Modelos (Vinculados a Marca)</div>
+            <div class="card-body">
+                <form method="POST" class="row g-2 mb-3">
+                    <input type="hidden" name="accion" value="agregar_modelo">
+                    <div class="col-5">
+                        <select name="marca_id" class="form-select form-select-sm" required>
+                            <option value="" disabled selected>Seleccione Marca...</option>
+                            {% for m in marcas %}
+                            <option value="{{ m.id }}">{{ m.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-4">
+                        <input type="text" name="nombre" class="form-control form-control-sm" placeholder="Modelo (ej. 016)" required>
+                    </div>
+                    <div class="col-3">
+                        <button class="btn btn-sm btn-primary w-100">Agregar</button>
+                    </div>
+                </form>
+                <table class="table table-sm table-striped mb-0">
+                    <thead><tr><th>Marca</th><th>Modelo</th><th class="text-end">Acción</th></tr></thead>
+                    <tbody>
+                        {% for mod in modelos %}
+                        <tr>
+                            <td><span class="badge bg-secondary">{{ mod.marca.nombre }}</span></td>
+                            <td>{{ mod.nombre }}</td>
+                            <td class="text-end">
+                                <form method="POST" class="d-inline">
+                                    <input type="hidden" name="accion" value="eliminar_modelo">
+                                    <input type="hidden" name="id" value="{{ mod.id }}">
+                                    <button class="btn btn-sm btn-outline-danger py-0">Eliminar</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. COLORES -->
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-dark text-white fw-bold">3. Colores</div>
+            <div class="card-body">
+                <form method="POST" class="d-flex gap-2 mb-3">
+                    <input type="hidden" name="accion" value="agregar_color">
+                    <input type="text" name="color" class="form-control form-control-sm" placeholder="Ej. Negro, Dorado, Blanco..." required>
+                    <button class="btn btn-sm btn-primary">Agregar</button>
+                </form>
+                <table class="table table-sm table-striped mb-0">
+                    <thead><tr><th>ID</th><th>Color</th><th class="text-end">Acción</th></tr></thead>
+                    <tbody>
+                        {% for c in colores %}
+                        <tr>
+                            <td>{{ c.id }}</td>
+                            <td>{{ c.color }}</td>
+                            <td class="text-end">
+                                <form method="POST" class="d-inline">
+                                    <input type="hidden" name="accion" value="eliminar_color">
+                                    <input type="hidden" name="id" value="{{ c.id }}">
+                                    <button class="btn btn-sm btn-outline-danger py-0">Eliminar</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. TIPOS DE CALZADO -->
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-dark text-white fw-bold">4. Tipos de Calzado</div>
+            <div class="card-body">
+                <form method="POST" class="d-flex gap-2 mb-3">
+                    <input type="hidden" name="accion" value="agregar_tipo">
+                    <input type="text" name="descripcion" class="form-control form-control-sm" placeholder="Ej. Sandalias, Tenis, Botines..." required>
+                    <button class="btn btn-sm btn-primary">Agregar</button>
+                </form>
+                <table class="table table-sm table-striped mb-0">
+                    <thead><tr><th>ID</th><th>Descripción</th><th class="text-end">Acción</th></tr></thead>
+                    <tbody>
+                        {% for t in tipos %}
+                        <tr>
+                            <td>{{ t.id }}</td>
+                            <td>{{ t.descripcion }}</td>
+                            <td class="text-end">
+                                <form method="POST" class="d-inline">
+                                    <input type="hidden" name="accion" value="eliminar_tipo">
+                                    <input type="hidden" name="id" value="{{ t.id }}">
+                                    <button class="btn btn-sm btn-outline-danger py-0">Eliminar</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. TALLAS -->
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white fw-bold">5. Tallas (Equivalencias Internacionales)</div>
+            <div class="card-body">
+                <form method="POST" class="row g-2 mb-3">
+                    <input type="hidden" name="accion" value="agregar_talla">
+                    <div class="col-md-2"><input type="text" name="eu" class="form-control form-control-sm" placeholder="EU (Oblig.) ej. 29" required></div>
+                    <div class="col-md-2"><input type="text" name="br" class="form-control form-control-sm" placeholder="BR ej. 27"></div>
+                    <div class="col-md-2"><input type="text" name="usa" class="form-control form-control-sm" placeholder="USA ej. 12"></div>
+                    <div class="col-md-2"><input type="text" name="jp" class="form-control form-control-sm" placeholder="JP ej. 18.0"></div>
+                    <div class="col-md-2"><input type="text" name="cm" class="form-control form-control-sm" placeholder="CM ej. 18.0"></div>
+                    <div class="col-md-2"><button class="btn btn-sm btn-primary w-100">Agregar Talla</button></div>
+                </form>
+                <table class="table table-sm table-striped mb-0">
+                    <thead>
+                        <tr><th>EU</th><th>BR</th><th>USA</th><th>JP</th><th>CM</th><th class="text-end">Acción</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for tal in tallas %}
+                        <tr>
+                            <td><strong>{{ tal.eu }}</strong></td>
+                            <td>{{ tal.br or '-' }}</td>
+                            <td>{{ tal.usa or '-' }}</td>
+                            <td>{{ tal.jp or '-' }}</td>
+                            <td>{{ tal.cm or '-' }}</td>
+                            <td class="text-end">
+                                <form method="POST" class="d-inline">
+                                    <input type="hidden" name="accion" value="eliminar_talla">
+                                    <input type="hidden" name="id" value="{{ tal.id }}">
+                                    <button class="btn btn-sm btn-outline-danger py-0">Eliminar</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% block content %}
+<h4 class="mb-3">Pedidos Mayoristas, Reserva y Confirmación Comercial (HU-04 · HU-05 · HU-06)</h4>
+
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-primary text-white">Nuevo Pedido Mayorista (RN-03 · RNF-01)</div>
+    <div class="card-body">
+        <form method="POST" class="row g-3">
+            <input type="hidden" name="accion" value="crear">
+
+            {% if es_gestor %}
+            <div class="col-md-3">
+                <label class="form-label">Cliente Mayorista</label>
+                <select name="cliente_id" class="form-select" required>
+                    <option value="" disabled selected>Seleccione cliente...</option>
+                    {% for cli in clientes %}
+                    <option value="{{ cli.id }}">{{ cli.razon_social }} ({{ cli.estado_aval }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+
+            <div class="col-md-4">
+                <label class="form-label">Calzado Activo</label>
+                <select name="calzado_id" id="selectCalzadoPedido" class="form-select" required>
+                    {% for cal in calzados_activos %}
+                    <option value="{{ cal.id }}" data-total-disp="{{ cal.stock_disponible }}" data-res="{{ cal.stock_reservado }}">
+                        {{ cal.codigo }} - {{ cal.marca.nombre }} {{ cal.modelo.nombre }} ({{ cal.color_obj.color }}, EU {{ cal.talla.eu }}) | Disp Total: {{ cal.stock_disponible }} | Res: {{ cal.stock_reservado }} | Bs. {{ "%.2f"|format(cal.precio_mayorista) }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <small class="text-muted" id="infoStockAlmacenSeleccionado"></small>
+            </div>
+
+            <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                const stockPorAlm = {
+                    {% for st in stocks_almacen %}
+                    "{{ st.almacen.nombre }}_{{ st.calzado_id }}": {{ st.cantidad }},
+                    {% endfor %}
+                };
+                const selAlm = document.querySelector('select[name="observacion"]');
+                const selCal = document.getElementById("selectCalzadoPedido");
+                const infoEl = document.getElementById("infoStockAlmacenSeleccionado");
+                function actualizarInfoStock() {
+                    if (!selAlm || !selCal || !infoEl) return;
+                    const key = `${selAlm.value}_${selCal.value}`;
+                    const cantAlm = (key in stockPorAlm) ? stockPorAlm[key] : 0;
+                    infoEl.textContent = `Stock en ${selAlm.value}: ${cantAlm} uds`;
+                }
+                if (selAlm) selAlm.addEventListener("change", actualizarInfoStock);
+                if (selCal) selCal.addEventListener("change", actualizarInfoStock);
+                actualizarInfoStock();
+            });
+            </script>
+
+            <div class="col-md-2">
+                <label class="form-label">Cantidad</label>
+                <input type="number" name="cantidad" min="1" value="1" class="form-control" required>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Observación (Almacén)</label>
+                <select name="observacion" class="form-select" required>
+                    {% for alm in almacenes %}
+                    <option value="{{ alm.nombre }}">{{ alm.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Fecha Estimada Entrega</label>
+                <input type="date" name="fecha_estimada_entrega" class="form-control">
+            </div>
+
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">Registrar Pedido (Pendiente)</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header">Pedidos Registrados</div>
+    <div class="table-responsive">
+        <table class="table table-striped mb-0">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Cliente</th>
+                    <th>Almacén / Obs.</th>
+                    <th>Detalle (Ped / Res / Falt)</th>
+                    <th>Fecha Est.</th>
+                    <th>Total (Bs.)</th>
+                    <th>Estado</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ped in pedidos %}
+                <tr>
+                    <td><strong>{{ ped.codigo_pedido }}</strong></td>
+                    <td>{{ ped.cliente.razon_social }}</td>
+                    <td>{{ ped.observacion or '-' }}</td>
+                    <td>
+                        {% for det in ped.detalles %}
+                        <div>
+                            {{ det.calzado.codigo }} × {{ det.cantidad }}
+                            <span class="badge bg-info text-dark">Res: {{ det.cantidad_reservada }}</span>
+                            {% if det.cantidad_faltante > 0 %}
+                            <span class="badge bg-warning text-dark">Falt: {{ det.cantidad_faltante }}</span>
+                            {% endif %}
+                            (Bs. {{ "%.2f"|format(det.subtotal) }})
+                        </div>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        <form method="POST" class="d-flex align-items-center gap-1">
+                            <input type="hidden" name="accion" value="actualizar_fecha">
+                            <input type="hidden" name="pedido_id" value="{{ ped.id }}">
+                            <input type="date" name="fecha_estimada_entrega"
+                                   value="{{ ped.fecha_estimada_entrega.isoformat() if ped.fecha_estimada_entrega else '' }}"
+                                   class="form-control form-control-sm" style="width: 145px;">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary" title="Guardar fecha estimada">
+                                <i class="bi bi-check2"></i>
+                            </button>
+                        </form>
+                    </td>
+                    <td>Bs. {{ "%.2f"|format(ped.total) }}</td>
+                    <td>
+                        <span class="badge bg-{{ 'success' if ped.estado == 'Confirmado' else ('danger' if ped.estado == 'Anulado' else ('info text-dark' if ped.estado == 'Reservado' else 'warning text-dark')) }}">
+                            {{ ped.estado }}
+                        </span>
+                    </td>
+                    <td class="text-end">
+                        {% if es_gestor and ped.estado == 'Pendiente' %}
+                        <form method="POST" class="d-inline">
+                            <input type="hidden" name="accion" value="reservar">
+                            <input type="hidden" name="pedido_id" value="{{ ped.id }}">
+                            <button class="btn btn-sm btn-outline-info">Reservar Stock</button>
+                        </form>
+                        {% elif es_gestor and ped.estado == 'Reservado' %}
+                        <span class="badge bg-info text-dark me-1">Reservado</span>
+                        {% endif %}
+
+                        {% if es_gestor and ped.estado in ('Pendiente', 'Reservado') %}
+                        <form method="POST" class="d-inline">
+                            <input type="hidden" name="accion" value="confirmar">
+                            <input type="hidden" name="pedido_id" value="{{ ped.id }}">
+                            <button class="btn btn-sm btn-success">Confirmar</button>
+                        </form>
+                        {% endif %}
+
+                        {% if ped.estado != 'Anulado' %}
+                        <form method="POST" class="d-inline">
+                            <input type="hidden" name="accion" value="anular">
+                            <input type="hidden" name="pedido_id" value="{{ ped.id }}">
+                            <button class="btn btn-sm btn-outline-danger">Anular</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
