@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% block content %}
+<h4 class="mb-3">HU-11: Gestión de Usuarios Internos y Roles (RBAC)</h4>
+
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-success text-white">Registrar Usuario Interno</div>
+    <div class="card-body">
+        <form method="POST" class="row g-3">
+            <input type="hidden" name="accion" value="crear">
+            <div class="col-md-3">
+                <label class="form-label">Nombre Completo</label>
+                <input type="text" name="nombre" class="form-control" required>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">NIT / CI</label>
+                <input type="text" name="nit" class="form-control" required>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Teléfono</label>
+                <input type="text" name="telefono" class="form-control" required>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label">Dirección</label>
+                <input type="text" name="direccion" class="form-control" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Usuario / Login</label>
+                <input type="text" name="login" class="form-control" placeholder="ej. jperez" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Contraseña</label>
+                <input type="password" name="password" class="form-control" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Rol Interno</label>
+                <select name="rol" class="form-select" required>
+                    {% for r in roles_internos %}
+                    <option value="{{ r }}">{{ r }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="activo" id="usrActivo" checked>
+                    <label class="form-check-label" for="usrActivo">Cuenta Activa</label>
+                </div>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-success">Crear Usuario Interno</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header fw-bold">Usuarios Internos Registrados</div>
+    <div class="table-responsive">
+        <table class="table table-striped mb-0">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Usuario</th>
+                    <th>Rol, Estado y Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in usuarios %}
+                <tr>
+                    <td>{{ u.id }}</td>
+                    <td>{{ u.persona.nombre if u.persona else '-' }}</td>
+                    <td><strong>{{ u.login }}</strong></td>
+                    <td>
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <form method="POST" class="d-flex flex-wrap align-items-center gap-2 mb-0">
+                                <input type="hidden" name="accion" value="actualizar">
+                                <input type="hidden" name="usuario_id" value="{{ u.id }}">
+                                <select name="rol" class="form-select form-select-sm" style="width: 210px;">
+                                    {% for r in roles_internos %}
+                                    <option value="{{ r }}" {% if u.rol == r %}selected{% endif %}>{{ r }}</option>
+                                    {% endfor %}
+                                </select>
+                                <select name="activo" class="form-select form-select-sm" style="width: 130px;">
+                                    <option value="1" {% if u.activo %}selected{% endif %}>Activo</option>
+                                    <option value="0" {% if not u.activo %}selected{% endif %}>Inactivo</option>
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-outline-primary">Guardar</button>
+                            </form>
+                            <form method="POST" class="d-inline mb-0" onsubmit="return confirm('¿Eliminar el usuario {{ u.login }}?');">
+                                <input type="hidden" name="accion" value="eliminar">
+                                <input type="hidden" name="usuario_id" value="{{ u.id }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Borrar usuario">
+                                    <i class="bi bi-trash"></i> Borrar
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

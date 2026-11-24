@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block content %}
+<h4 class="mb-3">HU-10: Configuración de Sucursales y Almacenes</h4>
+
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-primary text-white">Registrar Nueva Sucursal / Almacén</div>
+    <div class="card-body">
+        <form method="POST" class="row g-3">
+            <input type="hidden" name="accion" value="crear">
+            <div class="col-md-4">
+                <label class="form-label">Nombre Almacén / Sucursal</label>
+                <input type="text" name="nombre" class="form-control" placeholder="Ej. Almacén Montero" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Ubicación</label>
+                <input type="text" name="ubicacion" class="form-control" placeholder="Ej. Mercado Central / Av. principal">
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="es_central" id="chkCentral">
+                    <label class="form-check-label" for="chkCentral">Es Central</label>
+                </div>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="activo" id="chkActivo" checked>
+                    <label class="form-check-label" for="chkActivo">Operativo</label>
+                </div>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">Guardar Almacén</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header fw-bold">Almacenes y Sucursales Registrados</div>
+    <div class="table-responsive">
+        <table class="table table-striped mb-0">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Ubicación</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for alm in almacenes %}
+                {% set esta_activo = alm.activo if alm.activo is defined else True %}
+                <tr>
+                    <td>{{ alm.id }}</td>
+                    <td><strong>{{ alm.nombre }}</strong></td>
+                    <td>{{ alm.ubicacion or '-' }}</td>
+                    <td>
+                        {% if alm.es_central %}
+                        <span class="badge bg-dark">Central</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Sucursal</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge bg-{{ 'success' if esta_activo else 'danger' }}">
+                            {{ 'Operativo' if esta_activo else 'Inactivo' }}
+                        </span>
+                    </td>
+                    <td class="text-end">
+                        <form method="POST" class="d-inline">
+                            <input type="hidden" name="accion" value="toggle_estado">
+                            <input type="hidden" name="almacen_id" value="{{ alm.id }}">
+                            <input type="hidden" name="activo" value="{{ '0' if esta_activo else '1' }}">
+                            <button class="btn btn-sm btn-outline-{{ 'danger' if esta_activo else 'success' }}">
+                                {{ 'Desactivar' if esta_activo else 'Activar' }}
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

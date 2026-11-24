@@ -107,6 +107,7 @@ class Almacen(Base):
     nombre = Column(String(100), unique=True, nullable=False)
     ubicacion = Column(String(180), default="")
     es_central = Column(Boolean, default=False, nullable=False)
+    activo = Column(Boolean, default=True, nullable=False)
 
     stocks = relationship("StockAlmacen", back_populates="almacen", cascade="all, delete-orphan")
 
@@ -136,7 +137,6 @@ class Calzado(Base):
     talla = relationship("Talla", back_populates="calzados")
     detalles_pedido = relationship("DetallePedido", back_populates="calzado")
     stocks_almacen = relationship("StockAlmacen", back_populates="calzado", cascade="all, delete-orphan")
-    importaciones = relationship("ImportacionFabrica", back_populates="calzado")
 
 
 class StockAlmacen(Base):
@@ -154,12 +154,28 @@ class StockAlmacen(Base):
     calzado = relationship("Calzado", back_populates="stocks_almacen")
 
 
+class ImportacionFabrica(Base):
+    __tablename__ = "ImportacionFabrica"
+    id = Column(Integer, primary_key=True)
+    codigo_lote = Column(String(60), unique=True, nullable=False)
+    fabrica_origen = Column(String(120), nullable=False)
+    almacen_id = Column(Integer, ForeignKey("Almacen.id"), nullable=False)
+    calzado_id = Column(Integer, ForeignKey("Calzado.id"), nullable=False)
+    cantidad = Column(Integer, nullable=False)
+    fecha_arribo = Column(Date, default=date.today, nullable=False)
+    fecha_registro = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    almacen = relationship("Almacen")
+    calzado = relationship("Calzado")
+
+
 class Pedido(Base):
     __tablename__ = "Pedido"
     id = Column(Integer, primary_key=True)
     codigo_pedido = Column(String(40), unique=True, nullable=False)
     cliente_id = Column(Integer, ForeignKey("Cliente.id"), nullable=False)
     fecha_creacion = Column(DateTime, default=datetime.utcnow, nullable=False)
+    fecha_actualizacion = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     estado = Column(String(30), default="Pendiente", nullable=False)
     total = Column(Float, default=0.0, nullable=False)
     fecha_estimada_entrega = Column(Date, nullable=True)
@@ -184,21 +200,6 @@ class DetallePedido(Base):
     calzado = relationship("Calzado", back_populates="detalles_pedido")
 
 
-class ImportacionFabrica(Base):
-    __tablename__ = "ImportacionFabrica"
-    id = Column(Integer, primary_key=True)
-    codigo_lote = Column(String(50), unique=True, nullable=False)
-    fabrica = Column(String(120), nullable=False)
-    calzado_id = Column(Integer, ForeignKey("Calzado.id"), nullable=False)
-    almacen_id = Column(Integer, ForeignKey("Almacen.id"), nullable=False)
-    cantidad = Column(Integer, nullable=False)
-    fecha_arribo = Column(Date, default=date.today, nullable=False)
-    fecha_creacion = Column(DateTime, default=datetime.utcnow, nullable=False)
-
-    calzado = relationship("Calzado", back_populates="importaciones")
-    almacen = relationship("Almacen")
-
-
 class TraspasoAlmacen(Base):
     __tablename__ = "TraspasoAlmacen"
     id = Column(Integer, primary_key=True)
@@ -214,8 +215,60 @@ class TraspasoAlmacen(Base):
     calzado = relationship("Calzado")
 
 
+class AjusteInventario(Base):
+    __tablename__ = "AjusteInventario"
+    id = Column(Integer, primary_key=True)
+    codigo_ajuste = Column(String(50), unique=True, nullable=False)
+    almacen_id = Column(Integer, ForeignKey("Almacen.id"), nullable=False)
+    calzado_id = Column(Integer, ForeignKey("Calzado.id"), nullable=False)
+    stock_anterior = Column(Integer, nullable=False)
+    stock_fisico = Column(Integer, nullable=False)
+    diferencia = Column(Integer, nullable=False)
+    motivo = Column(String(200), nullable=False)
+    fecha_ajuste = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    almacen = relationship("Almacen")
+    calzado = relationship("Calzado")
+
+
+def _migrar_columnas_faltantes(engine):
+    from sqlalchemy import inspect, text
+    insp = inspect(engine)
+    tablas = set(insp.get_table_names())
+    with engine.begin() as conn:
+        for table_name, table_obj in Base.metadata.tables.items():
+            if table_name not in tablas:
+                continue
+            cols_existentes = {c["name"] for c in insp.get_columns(table_name)}
+            for col in table_obj.columns:
+                if col.name in cols_existentes:
+                    continue
+                col_type_sql = col.type.compile(dialect=engine.dialect)
+                default_sql = ""
+                if col.default is not None and isinstance(col.default.arg, (str, int, float, bool)):
+                    val = col.default.arg
+                    if isinstance(val, bool):
+                        default_sql = f" DEFAULT {1 if val else 0}"
+                    elif isinstance(val, str):
+                        default_sql = f" DEFAULT '{val}'"
+                    else:
+                        default_sql = f" DEFAULT {val}"
+                elif not col.nullable:
+                    type_upper = str(col_type_sql).upper()
+                    if "INT" in type_upper or "BOOL" in type_upper:
+                        default_sql = " DEFAULT 0"
+                    elif "FLOAT" in type_upper or "REAL" in type_upper or "NUM" in type_upper:
+                        default_sql = " DEFAULT 0.0"
+                    elif "DATE" in type_upper or "TIME" in type_upper:
+                        default_sql = " DEFAULT CURRENT_TIMESTAMP"
+                    else:
+                        default_sql = " DEFAULT ''"
+                conn.execute(text(f'ALTER TABLE "{table_name}" ADD COLUMN "{col.name}" {col_type_sql}{default_sql}'))
+
+
 def get_session(db_url="sqlite:///calzados_abc.db"):
     engine = create_engine(db_url, connect_args={"check_same_thread": False} if db_url.startswith("sqlite") else {})
     Base.metadata.create_all(engine)
+    _migrar_columnas_faltantes(engine)
     session_factory = sessionmaker(bind=engine)
     return scoped_session(session_factory)

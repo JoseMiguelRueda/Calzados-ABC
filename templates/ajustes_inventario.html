@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block content %}
+<h4 class="mb-3">HU-09: Ajustes de Inventario por Mermas y Diferencias</h4>
+
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-dark text-white">Registrar Conteo Físico / Ajuste por Merma</div>
+    <div class="card-body">
+        <form method="POST" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Almacén</label>
+                <select name="almacen_id" class="form-select" required>
+                    {% for alm in almacenes %}
+                    <option value="{{ alm.id }}" {% if alm.activo is defined and not alm.activo %}disabled{% endif %}>
+                        {{ alm.nombre }}{% if alm.activo is defined and not alm.activo %} (Inactivo){% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Calzado</label>
+                <select name="calzado_id" class="form-select" required>
+                    {% for cal in calzados %}
+                    <option value="{{ cal.id }}">{{ cal.codigo }} - {{ cal.marca.nombre }} {{ cal.modelo.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Stock Físico Contado</label>
+                <input type="number" name="stock_fisico" min="0" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Motivo / Justificación</label>
+                <input type="text" name="motivo" class="form-control" placeholder="Ej. Merma por humedad o extravío" required>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-dark">Registrar Ajuste</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header fw-bold">Notas de Ajuste Emitidas</div>
+    <div class="table-responsive">
+        <table class="table table-striped mb-0">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Almacén</th>
+                    <th>Calzado</th>
+                    <th>Anterior</th>
+                    <th>Físico</th>
+                    <th>Diferencia</th>
+                    <th>Motivo</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for aj in ajustes %}
+                <tr>
+                    <td><strong>{{ aj.codigo_ajuste }}</strong></td>
+                    <td>{{ aj.almacen.nombre }}</td>
+                    <td>{{ aj.calzado.codigo }}</td>
+                    <td>{{ aj.stock_anterior }}</td>
+                    <td>{{ aj.stock_fisico }}</td>
+                    <td>
+                        <span class="badge bg-{{ 'success' if aj.diferencia > 0 else 'danger' }}">
+                            {{ '+' if aj.diferencia > 0 else '' }}{{ aj.diferencia }}
+                        </span>
+                    </td>
+                    <td>{{ aj.motivo }}</td>
+                    <td>{{ aj.fecha_ajuste.strftime('%Y-%m-%d %H:%M') if aj.fecha_ajuste else '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

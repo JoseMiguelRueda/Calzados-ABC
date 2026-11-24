@@ -2,145 +2,148 @@
 {% block content %}
 <h4 class="mb-3">Importación a Almacén Central y Traspasos Inter-Almacén (HU-07 · HU-08 · RN-04)</h4>
 
+{% if session.get('rol') in ['Administrador', 'Encargado de Almacén'] %}
 <div class="row g-4 mb-4">
-    <!-- HU-07: Importación de fábrica a Almacén Central -->
     <div class="col-md-6">
         <div class="card shadow-sm h-100">
-            <div class="card-header bg-dark text-white fw-bold">HU-07: Registrar Importación a Almacén Central</div>
+            <div class="card-header bg-dark text-white">HU-07: Registrar Importación a Almacén Central</div>
             <div class="card-body">
                 <form method="POST" class="row g-2">
                     <input type="hidden" name="accion" value="importar">
                     <div class="col-md-6">
-                        <label class="form-label small">Código Lote</label>
-                        <input type="text" name="codigo_lote" class="form-control form-control-sm" placeholder="IMP-2026-001" required>
+                        <label class="form-label">Código Lote</label>
+                        <input type="text" name="codigo_lote" class="form-control" placeholder="IMP-2026-001" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label small">Fábrica Origen</label>
-                        <input type="text" name="fabrica" class="form-control form-control-sm" placeholder="Fábrica Brasil" required>
+                        <label class="form-label">Fábrica Origen</label>
+                        <input type="text" name="fabrica_origen" class="form-control" placeholder="Fábrica Brasil" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label small">Calzado</label>
-                        <select name="calzado_id" class="form-select form-select-sm" required>
-                            {% for cal in calzados %}
-                            <option value="{{ cal.id }}">{{ cal.codigo }} - {{ cal.marca.nombre }} {{ cal.modelo.nombre }}</option>
+                        <label class="form-label">Almacén Destino</label>
+                        <select name="almacen_id" class="form-select">
+                            {% for alm in almacenes %}
+                            <option value="{{ alm.id }}" {% if alm.es_central %}selected{% endif %} {% if alm.activo is defined and not alm.activo %}disabled{% endif %}>
+                                {{ alm.nombre }}{% if alm.activo is defined and not alm.activo %} (Inactivo){% endif %}
+                            </option>
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label small">Cantidad</label>
-                        <input type="number" name="cantidad" min="1" value="50" class="form-control form-control-sm" required>
+                    <div class="col-md-6">
+                        <label class="form-label">Calzado</label>
+                        <select name="calzado_id" class="form-select" required>
+                            {% for cal in calzados %}
+                            <option value="{{ cal.id }}">
+                                {{ cal.codigo }} - {{ cal.marca.nombre if cal.marca else '' }} {{ cal.modelo.nombre if cal.modelo else '' }}
+                            </option>
+                            {% endfor %}
+                        </select>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label small">Fecha Arribo</label>
-                        <input type="date" name="fecha_arribo" class="form-control form-control-sm">
+                    <div class="col-md-6">
+                        <label class="form-label">Cantidad</label>
+                        <input type="number" name="cantidad" min="1" class="form-control" value="50" required>
                     </div>
-                    <div class="col-12 mt-2">
-                        <button class="btn btn-sm btn-dark">Ingresar a Almacén Central</button>
+                    <div class="col-md-6">
+                        <label class="form-label">Fecha Arribo</label>
+                        <input type="date" name="fecha_arribo" class="form-control">
+                    </div>
+                    <div class="col-12 mt-3">
+                        <button type="submit" class="btn btn-dark">Ingresar a Almacén Central</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- HU-08: Traspaso inter-almacén (RN-04) -->
     <div class="col-md-6">
         <div class="card shadow-sm h-100">
-            <div class="card-header bg-primary text-white fw-bold">HU-08: Traspaso Inter-Almacén (RN-04)</div>
+            <div class="card-header bg-primary text-white">HU-08: Traspaso Inter-Almacén (RN-04)</div>
             <div class="card-body">
                 <form method="POST" class="row g-2">
-                    <input type="hidden" name="accion" value="traspaso">
+                    <input type="hidden" name="accion" value="traspasar">
                     <div class="col-md-6">
-                        <label class="form-label small">Almacén Origen</label>
-                        <select name="almacen_origen_id" class="form-select form-select-sm" required>
+                        <label class="form-label">Almacén Origen</label>
+                        <select name="almacen_origen_id" class="form-select" required>
                             {% for alm in almacenes %}
-                            <option value="{{ alm.id }}">{{ alm.nombre }}</option>
+                            <option value="{{ alm.id }}" {% if alm.activo is defined and not alm.activo %}disabled{% endif %}>
+                                {{ alm.nombre }}{% if alm.activo is defined and not alm.activo %} (Inactivo){% endif %}
+                            </option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label small">Almacén Destino</label>
-                        <select name="almacen_destino_id" class="form-select form-select-sm" required>
+                        <label class="form-label">Almacén Destino</label>
+                        <select name="almacen_destino_id" class="form-select" required>
                             {% for alm in almacenes %}
-                            <option value="{{ alm.id }}">{{ alm.nombre }}</option>
+                            <option value="{{ alm.id }}" {% if alm.activo is defined and not alm.activo %}disabled{% endif %}>
+                                {{ alm.nombre }}{% if alm.activo is defined and not alm.activo %} (Inactivo){% endif %}
+                            </option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="col-md-8">
-                        <label class="form-label small">Calzado</label>
-                        <select name="calzado_id" class="form-select form-select-sm" required>
+                        <label class="form-label">Calzado</label>
+                        <select name="calzado_id" class="form-select" required>
                             {% for cal in calzados %}
-                            <option value="{{ cal.id }}">{{ cal.codigo }} - {{ cal.marca.nombre }} {{ cal.modelo.nombre }}</option>
+                            <option value="{{ cal.id }}">
+                                {{ cal.codigo }} - {{ cal.marca.nombre if cal.marca else '' }} {{ cal.modelo.nombre if cal.modelo else '' }}
+                            </option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label small">Cantidad</label>
-                        <input type="number" name="cantidad" min="1" value="5" class="form-control form-control-sm" required>
+                        <label class="form-label">Cantidad</label>
+                        <input type="number" name="cantidad" min="1" class="form-control" value="5" required>
                     </div>
-                    <div class="col-12 mt-2">
-                        <button class="btn btn-sm btn-primary">Ejecutar Traspaso</button>
+                    <div class="col-12 mt-3">
+                        <button type="submit" class="btn btn-primary">Ejecutar Traspaso</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
+{% endif %}
 
-<div class="card shadow-sm mb-4">
-    <div class="card-header fw-bold d-flex flex-wrap justify-content-between align-items-center gap-2">
-        <span>Stock por Almacén</span>
-        <div class="input-group input-group-sm" style="max-width: 320px;">
-            <span class="input-group-text"><i class="bi bi-search"></i></span>
-            <input type="text" id="buscarModeloStock" class="form-control" placeholder="Buscar por modelo...">
-            <button type="button" id="limpiarBuscarModelo" class="btn btn-outline-secondary" title="Limpiar búsqueda">
-                <i class="bi bi-x"></i>
-            </button>
-        </div>
+<div class="card mb-4 shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span class="fw-bold">Stock por Almacén</span>
+        <form method="GET" class="d-flex gap-2">
+            <input type="text" name="modelo" class="form-control form-control-sm" placeholder="Buscar modelo o código..." value="{{ buscar_modelo or '' }}">
+            <button type="submit" class="btn btn-sm btn-outline-secondary">Buscar</button>
+        </form>
     </div>
     <div class="table-responsive">
-        <table class="table table-sm table-striped mb-0" id="tablaStockAlmacen">
-            <thead><tr><th>Almacén</th><th>Código Calzado</th><th>Modelo</th><th>Producto</th><th>Cantidad</th></tr></thead>
+        <table class="table table-striped mb-0">
+            <thead>
+                <tr>
+                    <th>Almacén</th>
+                    <th>Código Calzado</th>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                </tr>
+            </thead>
             <tbody>
                 {% for st in stocks %}
-                <tr class="fila-stock-almacen" data-modelo="{{ st.calzado.modelo.nombre|lower }}">
-                    <td>{{ st.almacen.nombre }}</td>
-                    <td>{{ st.calzado.codigo }}</td>
-                    <td><span class="badge bg-secondary">{{ st.calzado.modelo.nombre }}</span></td>
-                    <td>{{ st.calzado.marca.nombre }} {{ st.calzado.modelo.nombre }} ({{ st.calzado.color_obj.color }}, EU {{ st.calzado.talla.eu }})</td>
+                <tr>
+                    <td>{{ st.almacen.nombre if st.almacen else '-' }}</td>
+                    <td>{{ st.calzado.codigo if st.calzado else '-' }}</td>
+                    <td>
+                        {% if st.calzado %}
+                        {{ st.calzado.marca.nombre if st.calzado.marca else '' }}
+                        {{ st.calzado.modelo.nombre if st.calzado.modelo else '' }}
+                        ({{ st.calzado.color_obj.color if st.calzado.color_obj else '' }},
+                        EU {{ st.calzado.talla.eu if st.calzado.talla else '' }})
+                        {% else %}-{% endif %}
+                    </td>
                     <td><strong>{{ st.cantidad }}</strong></td>
                 </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-center text-muted">Sin registros de stock.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
-
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    const inputBuscar = document.getElementById("buscarModeloStock");
-    const btnLimpiar = document.getElementById("limpiarBuscarModelo");
-    const filas = document.querySelectorAll("#tablaStockAlmacen tbody tr.fila-stock-almacen");
-
-    function filtrarPorModelo() {
-        const termino = (inputBuscar.value || "").trim().toLowerCase();
-        filas.forEach(fila => {
-            const modelo = (fila.getAttribute("data-modelo") || "").toLowerCase();
-            fila.style.display = (!termino || modelo.includes(termino)) ? "" : "none";
-        });
-    }
-
-    if (inputBuscar) {
-        inputBuscar.addEventListener("input", filtrarPorModelo);
-    }
-    if (btnLimpiar && inputBuscar) {
-        btnLimpiar.addEventListener("click", function() {
-            inputBuscar.value = "";
-            filtrarPorModelo();
-            inputBuscar.focus();
-        });
-    }
-});
-</script>
 
 <div class="row g-4">
     <div class="col-md-6">
@@ -148,30 +151,57 @@ document.addEventListener("DOMContentLoaded", function() {
             <div class="card-header fw-bold">Historial de Importaciones</div>
             <div class="table-responsive">
                 <table class="table table-sm mb-0">
-                    <thead><tr><th>Lote</th><th>Fábrica</th><th>Calzado</th><th>Cant.</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>Lote</th>
+                            <th>Fábrica</th>
+                            <th>Calzado</th>
+                            <th>Cant.</th>
+                        </tr>
+                    </thead>
                     <tbody>
                         {% for imp in importaciones %}
-                        <tr><td>{{ imp.codigo_lote }}</td><td>{{ imp.fabrica }}</td><td>{{ imp.calzado.codigo }}</td><td>+{{ imp.cantidad }}</td></tr>
+                        <tr>
+                            <td>{{ imp.codigo_lote }}</td>
+                            <td>{{ imp.fabrica_origen }}</td>
+                            <td>{{ imp.calzado.codigo if imp.calzado else '-' }}</td>
+                            <td>{{ imp.cantidad }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" class="text-center text-muted">Sin importaciones registradas.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
+
     <div class="col-md-6">
         <div class="card shadow-sm">
             <div class="card-header fw-bold">Historial de Traspasos</div>
             <div class="table-responsive">
                 <table class="table table-sm mb-0">
-                    <thead><tr><th>Código</th><th>Origen → Destino</th><th>Calzado</th><th>Cant.</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Origen → Destino</th>
+                            <th>Calzado</th>
+                            <th>Cant.</th>
+                        </tr>
+                    </thead>
                     <tbody>
                         {% for trp in traspasos %}
                         <tr>
                             <td>{{ trp.codigo_traspaso }}</td>
-                            <td>{{ trp.almacen_origen.nombre }} → {{ trp.almacen_destino.nombre }}</td>
-                            <td>{{ trp.calzado.codigo }}</td>
+                            <td>
+                                {{ trp.almacen_origen.nombre if trp.almacen_origen else '-' }}
+                                → {{ trp.almacen_destino.nombre if trp.almacen_destino else '-' }}
+                            </td>
+                            <td>{{ trp.calzado.codigo if trp.calzado else '-' }}</td>
                             <td>{{ trp.cantidad }}</td>
                         </tr>
+                        {% else %}
+                        <tr><td colspan="4" class="text-center text-muted">Sin traspasos registrados.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
